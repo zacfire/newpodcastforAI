@@ -33,7 +33,7 @@ def update_custom_rss():
         items=all_filtered_episodes
     )
 
-    save_path = "/path/to/your/webserver/directory/custom_rss.xml"  # 更改为实际的保存路径
+    save_path = "./rss/filtered_podcast_rss.xml"  # 更改为实际的保存路径
     new_rss.write_xml(open(save_path, "w", encoding='utf-8'), encoding='utf-8')
 
 # 假设你将这个函数设置为定期执行，例如每天运行一次
