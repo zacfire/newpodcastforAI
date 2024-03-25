@@ -2,8 +2,6 @@ import os
 import feedparser
 import PyRSS2Gen
 import datetime
-import xml.etree.ElementTree as ET
-from io import BytesIO
 
 def update_custom_rss():
     rss_urls = [
@@ -18,36 +16,37 @@ def update_custom_rss():
         feed = feedparser.parse(url)
         for entry in feed.entries:
             content = entry.title + " " + entry.get("description", "")
-            # 检查条目是否包含至少一个包含关键词的内容，并且不仅仅因为包含排除短语而被选中
-            if any(keyword.lower() in content.lower() for keyword in include_keywords) and not all(phrase in content for phrase in exclude_phrases):
-                audio_url = None
-                audio_length = 0
-                audio_type = 'audio/mpeg'  # 默认值
-                for link in entry.links:
-                    if link.rel == 'enclosure':
-                        audio_url = link.href
-                        audio_length = link.length if hasattr(link, 'length') else 0
-                        audio_type = link.type if hasattr(link, 'type') else 'audio/mpeg'
-                        break  # 假设每个条目只有一个音频文件链接
-                if audio_url:
-                    episode = PyRSS2Gen.RSSItem(
-                        title=entry.title,
-                        link=entry.link,
-                        description=entry.get("description", ""),
-                        guid=PyRSS2Gen.Guid(entry.id),
-                        pubDate=datetime.datetime(*entry.published_parsed[:6]),
-                        enclosure=PyRSS2Gen.Enclosure(url=audio_url, length=audio_length, type=audio_type)
-                    )
-                    all_filtered_episodes.append(episode)
+            if any(keyword.lower() in content.lower() for keyword in include_keywords):
+                if not any(phrase in content for phrase in exclude_phrases):
+                    audio_url = None
+                    audio_length = 0
+                    audio_type = 'audio/mpeg'  # 默认MIME类型
+                    for link in entry.links:
+                        if link.rel == 'enclosure':
+                            audio_url = link.href
+                            audio_length = link.length if hasattr(link, 'length') else 0
+                            audio_type = link.type if hasattr(link, 'type') else 'audio/mpeg'
+                            break  # 假设每个条目只有一个音频文件链接
+                    if audio_url:
+                        episode = PyRSS2Gen.RSSItem(
+                            title=entry.title,
+                            link=entry.link,
+                            description=entry.get("description", ""),
+                            guid=PyRSS2Gen.Guid(entry.id),
+                            pubDate=datetime.datetime(*entry.published_parsed[:6]),
+                            enclosure=PyRSS2Gen.Enclosure(url=audio_url, length=audio_length, type=audio_type)
+                        )
+                        all_filtered_episodes.append(episode)
 
     new_rss = PyRSS2Gen.RSS2(
         title="与AI有关",
-        link="https://emmmme.com/",  # 更改为你的RSS feed托管的URL
+        link="https://emmmme.com/",
         description="自动更新，42章经和on board！播客里包含关键词AI或OpenAI的播客单集",
         lastBuildDate=datetime.datetime.now(),
         language="zh-CN",
         items=all_filtered_episodes,
-        image=PyRSS2Gen.Image(url="https://cdn.midjourney.com/fdbcdcef-7aa5-42ad-abd5-540cdddacab4/0_1.webp", title="与AI有关", link="https://emmmme.com/")
+        image=PyRSS2Gen.Image(url="https://raw.githubusercontent.com/zacfire/newpodcastforAI/main/AI%20Logo%20Raw.png
+", title="与AI有关", link="https://emmmme.com/")
     )
 
     save_path = "./rss/filtered_podcast_rss.xml"  # 更改为实际的保存路径
