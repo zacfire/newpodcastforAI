@@ -1,4 +1,3 @@
-# 假设这段代码是你的更新脚本，它需要定期运行
 import os
 import feedparser
 import PyRSS2Gen
@@ -34,7 +33,14 @@ def update_custom_rss():
     )
 
     save_path = "./rss/filtered_podcast_rss.xml"  # 更改为实际的保存路径
+
+    # 确保目录存在
+    dir_name = os.path.dirname(save_path)
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
+
+    # 保存RSS文件
     new_rss.write_xml(open(save_path, "w", encoding='utf-8'), encoding='utf-8')
 
-# 假设你将这个函数设置为定期执行，例如每天运行一次
+# 运行更新函数
 update_custom_rss()
