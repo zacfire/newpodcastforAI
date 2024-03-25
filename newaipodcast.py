@@ -2,6 +2,8 @@ import os
 import feedparser
 import PyRSS2Gen
 import datetime
+import xml.etree.ElementTree as ET
+from io import BytesIO
 
 def update_custom_rss():
     rss_urls = [
@@ -26,21 +28,41 @@ def update_custom_rss():
 
     new_rss = PyRSS2Gen.RSS2(
         title="AI相关的播客集合",
-        link="https://emmmme.com/aipodcast.xml",  # 更改为实际的访问URL
+        link="https://emmmme.com/aipodcast.xml",
         description="自动更新，包含关键词AI或OpenAI的播客单集",
         lastBuildDate=datetime.datetime.now(),
         items=all_filtered_episodes
     )
 
-    save_path = "./rss/filtered_podcast_rss.xml"  # 更改为实际的保存路径
-
-    # 确保目录存在
+    save_path = "./rss/filtered_podcast_rss.xml"  # 确保目录存在
     dir_name = os.path.dirname(save_path)
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
 
-    # 保存RSS文件
-    new_rss.write_xml(open(save_path, "w", encoding='utf-8'), encoding='utf-8')
+    # 使用BytesIO临时保存RSS XML
+    rss_xml = BytesIO()
+    new_rss.write_xml(rss_xml, encoding='utf-8')
+
+    # 解析生成的RSS XML
+    rss_xml.seek(0)  # 回到BytesIO对象的开始位置
+    rss_tree = ET.parse(rss_xml)
+    rss_root = rss_tree.getroot()
+
+    # 创建atom:link元素
+    atom_link = ET.Element("{http://www.w3.org/2005/Atom}link", {
+        "href": "https://emmmme.com/aipodcast.xml",
+        "rel": "self",
+        "type": "application/rss+xml"
+    })
+
+    # 添加命名空间
+    ET.register_namespace('atom', 'http://www.w3.org/2005/Atom')
+
+    # 将atom:link元素添加到channel元素
+    rss_root.find('channel').insert(0, atom_link)
+
+    # 保存修改后的RSS文件
+    rss_tree.write(save_path, encoding='utf-8', xml_declaration=True)
 
 # 运行更新函数
 update_custom_rss()
