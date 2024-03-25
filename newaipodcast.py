@@ -16,28 +16,33 @@ def update_custom_rss():
     for url in rss_urls:
         feed = feedparser.parse(url)
         for entry in feed.entries:
-            if any(keyword.lower() in (entry.title + " " + entry.description).lower() for keyword in keywords):
-                episode = PyRSS2Gen.RSSItem(
-                    title=entry.title,
-                    link=entry.link,
-                    description=entry.description,
-                    guid=PyRSS2Gen.Guid(entry.link),
-                    pubDate=datetime.datetime(*entry.published_parsed[:6])
-                )
-                all_filtered_episodes.append(episode)
+            if any(keyword.lower() in (entry.title + " " + entry.get("description", "")).lower() for keyword in keywords):
+                if 'links' in entry:
+                    for link in entry.links:
+                        if link.rel == 'enclosure':
+                            episode = PyRSS2Gen.RSSItem(
+                                title=entry.title,
+                                link=entry.link,
+                                description=entry.get("description", ""),
+                                guid=PyRSS2Gen.Guid(entry.id),
+                                pubDate=datetime.datetime(*entry.published_parsed[:6]),
+                                enclosure=PyRSS2Gen.Enclosure(url=link.href, length=str(link.length), type=link.type)
+                            )
+                            all_filtered_episodes.append(episode)
+                            break  # 假设每个条目只有一个音频文件链接
 
     new_rss = PyRSS2Gen.RSS2(
         title="AI相关的播客集合",
-        link="https://emmmme.com/aipodcast",  # 更改为你的RSS feed最终托管的URL
+        link="https://emmmme.com/aipodcast",  # 更改为你的RSS feed托管的URL
         description="自动更新，包含关键词AI或OpenAI的播客单集",
         lastBuildDate=datetime.datetime.now(),
-        language="zh-CN",  # 播客的语言
+        language="zh-CN",
         items=all_filtered_episodes
     )
 
     save_path = "./rss/filtered_podcast_rss.xml"  # 更改为实际的保存路径
 
-    # 生成RSS XML
+    # 生成并修改RSS XML以添加额外的播客元素
     rss_xml = BytesIO()
     new_rss.write_xml(rss_xml, encoding='utf-8')
     rss_xml.seek(0)
@@ -50,28 +55,11 @@ def update_custom_rss():
 
     # 添加atom:link元素
     atom_link = ET.Element("{http://www.w3.org/2005/Atom}link", {
-        "href": "https://zacfire.github.io/newpodcastforAI/rss/filtered_podcast_rss.xml",
+        "href": "https://zacfire.github.io/newpodcastforAI/rss/filtered_podcast_rss.xml",  # RSS文件的实际URL
         "rel": "self",
         "type": "application/rss+xml"
     })
     rss_root.find('channel').insert(0, atom_link)
-
-    # 添加itunes:explicit元素
-    itunes_explicit = ET.SubElement(rss_root.find('channel'), "{http://www.itunes.com/dtds/podcast-1.0.dtd}explicit",)
-    itunes_explicit.text = "no"
-
-    # 添加itunes:category元素
-    itunes_category = ET.SubElement(rss_root.find('channel'), "{http://www.itunes.com/dtds/podcast-1.0.dtd}category",)
-    itunes_category.set("text", "Technology")
-
-    # 添加image元素
-    image = ET.SubElement(rss_root.find('channel'), "image")
-    image_url = ET.SubElement(image, "url")
-    image_url.text = "https://emmmme.com/path/to/your/image.jpg"  # 更换为你的播客封面图片URL
-    image_title = ET.SubElement(image, "title")
-    image_title.text = "AI相关的播客集合"
-    image_link = ET.SubElement(image, "link")
-    image_link.text = "https://emmmme.com/aipodcast"
 
     # 确保目录存在
     dir_name = os.path.dirname(save_path)
@@ -79,7 +67,8 @@ def update_custom_rss():
         os.makedirs(dir_name)
 
     # 保存修改后的RSS文件
-    rss_tree.write(save_path, encoding='utf-8', xml_declaration=True)
+    with open(save_path, "wb") as f:
+        rss_tree.write(f, encoding='utf-8', xml_declaration=True)
 
 # 运行更新函数
 update_custom_rss()
