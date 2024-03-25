@@ -28,28 +28,50 @@ def update_custom_rss():
 
     new_rss = PyRSS2Gen.RSS2(
         title="AI相关的播客集合",
-        link="https://emmmme.com/aipodcast",  # 确保这是你的RSS feed最终托管的URL
+        link="https://emmmme.com/aipodcast",  # 更改为你的RSS feed最终托管的URL
         description="自动更新，包含关键词AI或OpenAI的播客单集",
         lastBuildDate=datetime.datetime.now(),
+        language="zh-CN",  # 播客的语言
         items=all_filtered_episodes
     )
 
     save_path = "./rss/filtered_podcast_rss.xml"  # 更改为实际的保存路径
 
-    # 生成并修改RSS XML以添加atom:link元素
+    # 生成RSS XML
     rss_xml = BytesIO()
     new_rss.write_xml(rss_xml, encoding='utf-8')
-    rss_xml.seek(0)  # 回到BytesIO对象的开始位置
+    rss_xml.seek(0)
     rss_tree = ET.parse(rss_xml)
     rss_root = rss_tree.getroot()
 
+    # 添加命名空间
     ET.register_namespace('atom', 'http://www.w3.org/2005/Atom')
+    ET.register_namespace('itunes', 'http://www.itunes.com/dtds/podcast-1.0.dtd')
+
+    # 添加atom:link元素
     atom_link = ET.Element("{http://www.w3.org/2005/Atom}link", {
-        "href": "https://zacfire.github.io/newpodcastforAI/rss/filtered_podcast_rss.xml",  # RSS文件的实际URL
+        "href": "https://zacfire.github.io/newpodcastforAI/rss/filtered_podcast_rss.xml",
         "rel": "self",
         "type": "application/rss+xml"
     })
     rss_root.find('channel').insert(0, atom_link)
+
+    # 添加itunes:explicit元素
+    itunes_explicit = ET.SubElement(rss_root.find('channel'), "{http://www.itunes.com/dtds/podcast-1.0.dtd}explicit",)
+    itunes_explicit.text = "no"
+
+    # 添加itunes:category元素
+    itunes_category = ET.SubElement(rss_root.find('channel'), "{http://www.itunes.com/dtds/podcast-1.0.dtd}category",)
+    itunes_category.set("text", "Technology")
+
+    # 添加image元素
+    image = ET.SubElement(rss_root.find('channel'), "image")
+    image_url = ET.SubElement(image, "url")
+    image_url.text = "https://emmmme.com/path/to/your/image.jpg"  # 更换为你的播客封面图片URL
+    image_title = ET.SubElement(image, "title")
+    image_title.text = "AI相关的播客集合"
+    image_link = ET.SubElement(image, "link")
+    image_link.text = "https://emmmme.com/aipodcast"
 
     # 确保目录存在
     dir_name = os.path.dirname(save_path)
