@@ -2,33 +2,35 @@ name: Update RSS Feed
 
 on:
   schedule:
-    # 每天UTC时间00:00自动运行
-    - cron:  '0 0 * * *'
-  workflow_dispatch:
+    - cron: '0 0 * * *'  # 每天UTC时间00:00自动运行
+  workflow_dispatch:  # 允许手动触发
 
 jobs:
-  update_rss:
+  build:
     runs-on: ubuntu-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
 
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
         python-version: '3.x'
-
+        
     - name: Install dependencies
       run: |
         pip install feedparser PyRSS2Gen
-
-    - name: Update RSS feed
-      run: python path/to/your/rss_update_script.py
-
-    - name: Commit RSS file
+        
+    - name: Generate RSS feed
       run: |
-        git config --global user.name 'GitHub Actions'
-        git config --global user.email 'actions@github.com'
-        git add path/to/your/generated_rss.xml
-        git commit -m "Update RSS feed" || echo "No changes to commit"
+        python newaipodcast.py  # 确保这里的路径与你的脚本在仓库中的相对路径匹配
+
+    - name: Commit and push if changed
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git add ./rss/filtered_podcast_rss.xml  # 添加你的RSS文件到git
+        git commit -m "Update RSS feed" -a || echo "No changes to RSS feed"
         git push
+
