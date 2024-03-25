@@ -45,8 +45,7 @@ def update_custom_rss():
         lastBuildDate=datetime.datetime.now(),
         language="zh-CN",
         items=all_filtered_episodes,
-        image=PyRSS2Gen.Image(url="https://raw.githubusercontent.com/zacfire/newpodcastforAI/main/AI%20Logo%20Raw.png
-", title="与AI有关", link="https://emmmme.com/")
+        image=PyRSS2Gen.Image(url="https://raw.githubusercontent.com/zacfire/newpodcastforAI/main/AI%20Logo%20Raw.png", title="与AI有关", link="https://emmmme.com/")
     )
 
     save_path = "./rss/filtered_podcast_rss.xml"  # 更改为实际的保存路径
