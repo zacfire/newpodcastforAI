@@ -33,7 +33,7 @@ def update_custom_rss():
 
     new_rss = PyRSS2Gen.RSS2(
         title="AI相关的节目",
-        link="https://emmmme.com/aipodcast",  # 更改为你的RSS feed托管的URL
+        link="https://emmmme.com/",  # 更改为你的RSS feed托管的URL
         description="自动更新，42章经和on board！播客里包含关键词AI或OpenAI的播客单集",
         lastBuildDate=datetime.datetime.now(),
         language="zh-CN",
