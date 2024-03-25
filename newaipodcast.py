@@ -28,7 +28,7 @@ def update_custom_rss():
 
     new_rss = PyRSS2Gen.RSS2(
         title="AI相关的播客集合",
-        link="https://emmmme.com/aipodcast.xml",  # 确保这是你的RSS feed最终托管的URL
+        link="https://emmmme.com/aipodcast",  # 确保这是你的RSS feed最终托管的URL
         description="自动更新，包含关键词AI或OpenAI的播客单集",
         lastBuildDate=datetime.datetime.now(),
         items=all_filtered_episodes
